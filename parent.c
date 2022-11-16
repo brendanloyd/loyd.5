@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
 		perror("Error: parent.c : shared memory failed.");
 	}
 	//set up seg id for array
-	int array_segment_id = shmget ( ARRAYKEY, sizeof(int) * 20, 0777 | IPC_CREAT);
+	int resourceArray_segment_id = shmget ( ARRAYKEY, sizeof(int) * 20, 0777 | IPC_CREAT);
         if (segment_id == -1) {
                 perror("Error: parent.c : shared memory failed.");
         }
@@ -98,14 +98,14 @@ int main(int argc, char **argv) {
 	}
 	
 	//attach memory segment for array
-	int* array = (int*)(shmat(array_segment_id, 0, 0));
-	if(array == NULL) {
+	int* resourceArray = (int*)(shmat(resourceArray_segment_id, 0, 0));
+	if(resourceArray == NULL) {
 		perror("Error: parent.c : shared memory for array failed.");
 
 	}
 	int i = 0;
 	for(i = 0; i < 20; i++) {
-		array[i] = (rand() % 10) + 1;
+		resourceArray[i] = (rand() % 10) + 1;
 	}
 	
 	/* Set shared memory segment to 0  */
@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
 	
 
 	for(i = 0; i < 20; i++) {
-	printf("The value of the array at position :%d is: %d\n", i, array[i]);
+	printf("The value of the array at position :%d is: %d\n", i, resourceArray[i]);
 	}
 	//detach message queue memory	
 	if (msgctl(msqid, IPC_RMID, NULL) == -1) {
@@ -170,11 +170,11 @@ int main(int argc, char **argv) {
 	//detach from the shared memory segment
 	shmdt(second_clock);
 	shmdt(nano_clock);
-	shmdt(array);
+	shmdt(resourceArray);
 	//free shared memory segment shm_id
 	shmctl(segment_id, IPC_RMID, NULL);
 	shmctl(nano_segment_id, IPC_RMID, NULL);
-	shmctl(array_segment_id, IPC_RMID, NULL):
+	shmctl(resourceArray_segment_id, IPC_RMID, NULL);
 	return EXIT_SUCCESS; 
 }
 
