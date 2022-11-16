@@ -18,6 +18,7 @@ void timeoutSigHandler(int);
 #define PERMS 0644
 #define SHMKEY  859047     /* Parent and child agree on common key.*/
 #define NANOKEY 123456
+#define ARRAYKEY 654321
 #define BUFF_SZ sizeof ( int )
 
 int* mem_ptr;

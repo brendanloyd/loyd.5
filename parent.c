@@ -73,7 +73,12 @@ int main(int argc, char **argv) {
 	if (segment_id == -1) {
 		perror("Error: parent.c : shared memory failed.");
 	}
-	
+	//set up seg id for array
+	int array_segment_id = shmget ( ARRAYKEY, sizeof(int) * 20, 0777 | IPC_CREAT);
+        if (segment_id == -1) {
+                perror("Error: parent.c : shared memory failed.");
+        }
+
 	//set up seg id for nano second
 	int nano_segment_id = shmget ( NANOKEY, BUFF_SZ, 0777 | IPC_CREAT);
 	if (nano_segment_id == -1) {
@@ -90,6 +95,17 @@ int main(int argc, char **argv) {
 	int* nano_clock = (int*)(shmat(nano_segment_id, 0, 0));
 	if(nano_clock == NULL) {
 		perror("Error: parent.c : shared memory for nano clock failed.");
+	}
+	
+	//attach memory segment for array
+	int* array = (int*)(shmat(array_segment_id, 0, 0));
+	if(array == NULL) {
+		perror("Error: parent.c : shared memory for array failed.");
+
+	}
+	int i = 0;
+	for(i = 0; i < 20; i++) {
+		array[i] = (rand() % 10) + 1;
 	}
 	
 	/* Set shared memory segment to 0  */
@@ -141,6 +157,10 @@ int main(int argc, char **argv) {
 	//print results	
         printf("Clock value in seconds is: %d : NanoSeconds is : %d\nParent is now ending\n",*second_clock, *nano_clock);
 	
+
+	for(i = 0; i < 20; i++) {
+	printf("The value of the array at position :%d is: %d\n", i, array[i]);
+	}
 	//detach message queue memory	
 	if (msgctl(msqid, IPC_RMID, NULL) == -1) {
       		perror("msgctl");
@@ -150,10 +170,11 @@ int main(int argc, char **argv) {
 	//detach from the shared memory segment
 	shmdt(second_clock);
 	shmdt(nano_clock);
-
+	shmdt(array);
 	//free shared memory segment shm_id
 	shmctl(segment_id, IPC_RMID, NULL);
 	shmctl(nano_segment_id, IPC_RMID, NULL);
+	shmctl(array_segment_id, IPC_RMID, NULL):
 	return EXIT_SUCCESS; 
 }
 
