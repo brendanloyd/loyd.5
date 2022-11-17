@@ -103,6 +103,9 @@ int main(int argc, char **argv) {
 		perror("Error: parent.c : shared memory for array failed.");
 
 	}
+
+	FILE *out_file = fopen("resource.log", "w");
+
 	int i = 0;
 	for(i = 0; i < 20; i++) {
 		resourceArray[i] = (rand() % 10) + 1;
@@ -154,10 +157,22 @@ int main(int argc, char **argv) {
 	//wait for all child processes to finish
 	while ((wpid = wait(&status)) > 0);
 	
-	//print results	
+	//print results
+	fprintf(out_file,"Clock value in seconds is: %d : NanoSeconds is : %d\nParent is now ending\n",*second_clock, *nano_clock);
         printf("Clock value in seconds is: %d : NanoSeconds is : %d\nParent is now ending\n",*second_clock, *nano_clock);
-	
 
+	fprintf(out_file,"---Available resource array---\n");	
+	for(i = 0; i < 20; i++) {
+	fprintf(out_file, "%d  ",i);
+	}
+	fprintf(out_file, "\n");
+	for(i = 0; i < 20; i++) {
+		fprintf(out_file, "%d  ", resourceArray[i]);
+		if(i > 10) {
+			fprintf(out_file, " ");
+		}
+	}
+	fprintf(out_file, "\n");
 	for(i = 0; i < 20; i++) {
 	printf("The value of the array at position :%d is: %d\n", i, resourceArray[i]);
 	}
