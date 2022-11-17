@@ -26,6 +26,6 @@ extern int errno;
 
 typedef struct my_msgbuf {
 	long mtype;
-	int resource;
+	int resourceRequest[20];
 } message;
 

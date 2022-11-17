@@ -64,11 +64,15 @@ int main(int argc, char **argv) {
 	//Setup id for message queue
         msqid = msgget(key, 0644|IPC_CREAT);
 
+	//for loops
+	int i = 0;
+
 	//store primer message	
 	buf.mtype = 1;
-	buf.resource = 0;
 
-	//get up seg id for second memory
+	for(i = 0; i < 20; i++) {
+		buf.resourceRequest[i] = 0;
+	}
 	int segment_id = shmget ( SHMKEY, BUFF_SZ, 0777 | IPC_CREAT);
 	if (segment_id == -1) {
 		perror("Error: parent.c : shared memory failed.");
@@ -103,7 +107,6 @@ int main(int argc, char **argv) {
 		perror("Error: parent.c : shared memory for array failed.");
 
 	}
-	int i = 0;
 	for(i = 0; i < 20; i++) {
 		resourceArray[i] = (rand() % 10) + 1;
 	}
@@ -126,14 +129,20 @@ int main(int argc, char **argv) {
 
 	//setup a random time to fork child processes
 	int timeToForkChild = (rand() % 500000);
-	
+	forkChildren(1);
 	//variable to hold totalChildProcesses
 	int totalChildProcesses = 0;
         while(time(NULL) < endwait) {
 		incrementClock(10000, second_clock, nano_clock);
-		if(*nano_clock < 15000) {
+		//if(*nano_clock < 15000) {
 			forkChildren(1);
-		}
+		//}
+                if (msgsnd(msqid, &buf, sizeof(buf), 0) == -1) {
+                        perror("msgsnd : parent.c ");
+                        exit(1);
+                }
+		
+
 		/*if(*nano_clock > timeToForkChild && totalChildProcesses < 40) {
 			//forkChildren(1);
 			totalChildProcesses++;
@@ -142,13 +151,7 @@ int main(int argc, char **argv) {
 		}*/
 		
 		msgrcv(msqid, &buf, sizeof(buf), 1, IPC_NOWAIT);
-		printf("resource requested is: %d\n",buf.resource);
 
-		if (msgsnd(msqid, &buf, sizeof(buf), 0) == -1) {
-                	perror("msgsnd : parent.c ");
-                	exit(1);
-        	}
- 
         }
 
 	//wait for all child processes to finish
@@ -156,11 +159,9 @@ int main(int argc, char **argv) {
 	
 	//print results	
         printf("Clock value in seconds is: %d : NanoSeconds is : %d\nParent is now ending\n",*second_clock, *nano_clock);
-	
-
-	for(i = 0; i < 20; i++) {
-	printf("The value of the array at position :%d is: %d\n", i, resourceArray[i]);
-	}
+        for(i = 0; i < 20; i++) {
+                printf("Array position: %d is: %d\n",i,buf.resourceRequest[i]);
+        }
 	//detach message queue memory	
 	if (msgctl(msqid, IPC_RMID, NULL) == -1) {
       		perror("msgctl");

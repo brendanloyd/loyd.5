@@ -6,6 +6,8 @@ int main(int argc, char** argv) {
         key_t key;
         int msqid = 0;
         const int key_id = 1234;
+	//random values needed for system times
+	srand(time(getpid()));
 
 	//setup id for the second clock
 	int segment_id = shmget(SHMKEY, BUFF_SZ, 0777);
@@ -45,24 +47,31 @@ int main(int argc, char** argv) {
 	key = ftok("./parent.c", key_id);
         msqid = msgget(key, 0644|IPC_CREAT);
 	buf.mtype = 1;
-	buf.resource = 2;
-
-	//random values needed for system times
-	srand(time(NULL));                
+	int i = 0;
+	for(i = 0; i < 20; i++) {
+		buf.resourceRequest[i] = (rand() % resourceArray[i]);
+	}
+	for(i = 0; i < 20; i++) {
+                printf("Array position: %d is: %d\n",i,buf.resourceRequest[i]);
+        }
+	
 	//start 3 seconds and spawn children
 	time_t endwait = time(NULL) + 2;
 	while(time(NULL) < endwait) {
-		if (msgsnd(msqid, &buf, sizeof(buf), 0) == -1) {
-                        perror("msgsnd");
-                        exit(1);
-                }
 	
 		// recieve message if there is one, if not wait.
 		msgrcv(msqid, &buf, sizeof(buf), 1, 0);
 		printf("resource granted\n");
 
+		if (msgsnd(msqid, &buf, sizeof(buf), 0) == -1) {
+                        perror("msgsnd");
+                        exit(1);
+                }
+
 	}
-	buf.resource = -1;
+	for(i = 0; i < 20; i++) {
+		buf.resourceRequest[i] = -1;
+	}
 	if (msgsnd(msqid, &buf, sizeof(buf), 0) == -1) {
                 perror("msgsnd");
         	exit(1);
